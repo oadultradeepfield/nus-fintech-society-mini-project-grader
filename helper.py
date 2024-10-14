@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import base64
+import json
 
 # Constants for Dataset
 MEAN = 0.13175272943327238
@@ -37,12 +39,7 @@ def create_sequences(data: np.array, sequence_length: int = 7) -> np.array:
 def create_simulate_trading_data() -> pd.DataFrame:
     """
     Creates a DataFrame containing simulated trading data.
-
-    This function reads the non-test and test trading data from CSV files, 
-    concatenates the last 6 entries of the non-test data with the test data,
-    standardizes the 'Close' prices, and generates a target variable indicating 
-    whether the price will go up the next day.
-
+    
     Returns:
         pd.DataFrame: A DataFrame containing the trading data with columns for 
                        standardized close prices and target variables.
@@ -60,10 +57,6 @@ def simulate_trading(trading_data: pd.DataFrame,
                      initial_balance: float = 500.00) -> float:
     """
     Simulates trading based on predictions from a trained model.
-
-    This function uses the provided trading data and a trained TensorFlow model 
-    to simulate buying and selling stocks. It starts with an initial balance, 
-    making trades based on the model's predictions, and returns the final balance.
 
     Args:
         trading_data (pd.DataFrame): The DataFrame containing trading data with 
@@ -100,8 +93,58 @@ def simulate_trading(trading_data: pd.DataFrame,
 
     return final_balance
 
+def generate_output(name: str, nus_id: str, initial_balance: float, final_balance: float) -> str:
+    """
+    Generates a secret code by encoding input parameters into a Base64 string.
+
+    Args:
+        name (str): The name of the user or entity.
+        nus_id (str): The NUS ID of the user or entity.
+        initial_balance (float): The initial balance represented as a floating-point number.
+        final_balance (float): The final balance represented as a floating-point number.
+
+    Returns:
+        str: A URL-safe Base64 encoded string representing the secret code.
+    """
+    data = {
+        "name": name.strip(),
+        "nus_id": nus_id.strip(),
+        "initial_price": initial_balance,
+        "final_price": final_balance
+    }
+    
+    json_data = json.dumps(data)
+    secret_code = base64.urlsafe_b64encode(json_data.encode()).decode('utf-8')
+    return secret_code
+
+def decode_secret_code(secret_code: str) -> dict:
+    """
+    Decodes a Base64 encoded secret code back into its original components.
+
+    Args:
+        secret_code (str): A Base64 encoded string representing the secret code.
+
+    Returns:
+        dict: A dictionary containing the original input parameters:
+              - 'name': The name of the user or entity.
+              - 'nus_id': The NUS ID of the user or entity.
+              - 'initial_balance': The initial balance as a string.
+              - 'final_balance': The final balance as a float.
+    """
+    json_data = base64.urlsafe_b64decode(secret_code).decode('utf-8')
+    data = json.loads(json_data)
+    return data
+
 # Test the script
 if __name__ == "__main__":
     trading_data = create_simulate_trading_data()
     model = tf.keras.models.load_model("model/baseline_model.h5")
-    print(simulate_trading(trading_data, model))
+    
+    name = "John Doe"
+    nus_id = "e1234567"
+    initial_balance = 1500.0
+    final_balance = simulate_trading(trading_data, model, initial_balance)
+    encoded_output = generate_output(name, nus_id, initial_balance, final_balance)
+    
+    print("Encoded Output:", encoded_output)
+    print("Decoded Output:", decode_secret_code(encoded_output))
