@@ -15,7 +15,8 @@ TEST_DATA_PATH = "data/dogecoin_test.csv"
 # First Trading Date
 FIRST_TRADING_DATE = "2021-04-03"
 
-def create_sequences(data: np.array, sequence_length: int = 7) -> np.array:
+def create_sequences(data: np.array, 
+                     sequence_length: int = 7) -> np.array:
     """
     Creates sequences of data for time series forecasting.
 
@@ -93,7 +94,26 @@ def simulate_trading(trading_data: pd.DataFrame,
 
     return final_balance
 
-def generate_output(name: str, nus_id: str, initial_balance: float, final_balance: float) -> str:
+def calculate_percentage_change(initial_balance: float, 
+                                final_balance: float) -> float:
+    """
+    Calculates the percentage change between an initial and final balance.
+
+    Args:
+        initial_balance (float): The starting value of the balance.
+        final_balance (float): The ending value of the balance.
+
+    Returns:
+        float: The percentage change from the initial balance to the final balance. 
+               A positive value indicates an increase, while a negative value indicates a decrease.
+    """
+    return (final_balance - initial_balance) / initial_balance * 100
+
+    
+def generate_output(name: str, 
+                    nus_id: str, 
+                    initial_balance: float, 
+                    final_balance: float) -> str:
     """
     Generates a secret code by encoding input parameters into a Base64 string.
 
@@ -144,7 +164,11 @@ if __name__ == "__main__":
     nus_id = "e1234567"
     initial_balance = 1500.0
     final_balance = simulate_trading(trading_data, model, initial_balance)
+    percentage_change = calculate_percentage_change(initial_balance, final_balance)
     encoded_output = generate_output(name, nus_id, initial_balance, final_balance)
     
+    print("Initial Balance:", initial_balance)
+    print("Final Balance:", final_balance)
+    print("Percentage Change:", percentage_change)
     print("Encoded Output:", encoded_output)
     print("Decoded Output:", decode_secret_code(encoded_output))
