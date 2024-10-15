@@ -1,0 +1,4 @@
+gradio==5.1.0
+numpy==2.1.2
+pandas==2.2.3
+tensorflow==2.17.0
